@@ -109,7 +109,7 @@ export default function GenerateurFactures() {
 
     // Fonction pour ajouter un rectangle noir
     const addBlackRectangle = (y: number, height: number) => {
-      pdf.setFillColor(0);
+      pdf.setFillColor('0');
       pdf.rect(0, y, pageWidth, height, 'F');
     };
 
