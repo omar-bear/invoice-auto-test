@@ -69,16 +69,16 @@ export default function GenerateurFactures() {
     setDateFacture(new Date().toISOString().split('T')[0]);
 
     // **Ajouter cette partie pour synchroniser isLoggedIn avec localStorage**
-    const storedIsLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const storedIsLoggedIn = localStorage.getItem('is-logged-in') === 'true';
     if (storedIsLoggedIn !== isLoggedIn) {
       setIsLoggedIn(storedIsLoggedIn);
     }
   }, []);
 
   const handleLogin = () => {
-    if (username === 'admin' && password === 'admin') {
+    if (username.toLowerCase() === 'dali' && password === '123456') {
       setIsLoggedIn(true);
-      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('is-logged-in', 'true');
     } else {
       alert('Identifiants incorrects');
     }
