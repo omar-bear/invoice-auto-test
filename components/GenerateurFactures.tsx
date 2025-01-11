@@ -44,9 +44,6 @@ export default function GenerateurFacturesHtml() {
     address: 'Rue Nabeul Z.I. Mghuira 3',
     phone: '22 398 057 / 55 398 057',
     nif: '1889188X/A/M 000',
-    /* bankName: "Banque de l'Habitat",
-    rib: '1406706710700131366',
-    bankBranch: 'MGHRIA', */
     additionalInfo: 'REBOBINAGE',
     email: 'BenKebliservice@gmail.com',
   };
@@ -117,7 +114,8 @@ export default function GenerateurFacturesHtml() {
   // Calcul des montants totaux
   // ===============================
   const formatCurrency = (amount: number) => {
-    return `${amount.toFixed(2)} DT`;
+    return `${amount.toFixed(3)} DT`;
+    // On met 3 décimales pour afficher les millimes si besoin
   };
 
   const totalHT = services.reduce((sum, service) => {
@@ -133,18 +131,34 @@ export default function GenerateurFacturesHtml() {
     return sum + (quantity * unitPrice * tvaRate) / 100;
   }, 0);
 
+  // Total TTC (sans timbre)
   const totalTTC = totalHT + totalTVA;
 
-  // Conversion du total TTC en lettres (français)
-  // Par exemple: 120 => "cent vingt"
-  const totalTTCEnLettres = writtenNumber(Math.floor(totalTTC)); // partie entière
-  const centimes = Math.round((totalTTC - Math.floor(totalTTC)) * 100);
+  // Timbre : 1 DT
+  const timbre = 1;
+  // Total TTC + Timbre
+  const totalAvecTimbre = totalTTC + timbre;
 
-  // Exemple d'affichage : "cent vingt dinars et trente-cinq centimes"
-  // Vous pouvez personnaliser le texte ci-dessous selon vos besoins
-  const totalTTCComplet = centimes
-    ? `${totalTTCEnLettres} dinars et ${writtenNumber(centimes)} centimes`
-    : `${totalTTCEnLettres} dinars`;
+  // ===============================
+  // Conversion du total TTC + Timbre en lettres
+  // ===============================
+  // Exemple : 125.750 => "cent vingt-cinq dinars et sept cent cinquante millimes"
+  const totalGlobal = parseFloat(totalAvecTimbre.toFixed(3)); // Arrondi à 3 décimales
+  const partieEntiere = Math.floor(totalGlobal); // Ex: 125
+  const millimes = Math.round((totalGlobal - partieEntiere) * 1000); // Ex: 0.750 * 1000 = 750
+
+  // Convertir la partie entière en lettres
+  const partieEntiereEnLettres = writtenNumber(partieEntiere);
+  // Convertir la partie millimes en lettres (si > 0)
+  const millimesEnLettres = millimes > 0 ? writtenNumber(millimes) : null;
+
+  // Construire la phrase finale
+  let totalGlobalEnLettres = '';
+  if (millimesEnLettres) {
+    totalGlobalEnLettres = `${partieEntiereEnLettres} dinars et ${millimesEnLettres} millimes`;
+  } else {
+    totalGlobalEnLettres = `${partieEntiereEnLettres} dinars`;
+  }
 
   // ===============================
   // Génération du PDF à partir du HTML
@@ -199,7 +213,6 @@ export default function GenerateurFacturesHtml() {
           width: 40%;
           text-align: center;
         }
-        /* <-- Ajout pour centrer l'image */ 
         .facture-center img {
           display: block;
           margin: 0 auto 5px auto; 
@@ -384,9 +397,9 @@ export default function GenerateurFacturesHtml() {
                     <tr>
                       <td>${service.nom}</td>
                       <td>${quantity}</td>
-                      <td>${unitPrice.toFixed(2)} DT</td>
+                      <td>${unitPrice.toFixed(3)} DT</td>
                       <td>${tvaRate}%</td>
-                      <td>${totalHT.toFixed(2)} DT</td>
+                      <td>${totalHT.toFixed(3)} DT</td>
                     </tr>
                   `;
                 })
@@ -399,10 +412,14 @@ export default function GenerateurFacturesHtml() {
              Totaux
         ============================= -->
         <div class="totals">
-          <div><strong>Total HT:</strong> ${totalHT.toFixed(2)} DT</div>
-          <div><strong>Total TVA:</strong> ${totalTVA.toFixed(2)} DT</div>
-          <div><strong>Total TTC:</strong> ${totalTTC.toFixed(2)} DT</div>
-          <div><strong>Total en lettres:</strong> ${totalTTCComplet}</div>
+          <div><strong>Total HT:</strong> ${totalHT.toFixed(3)} DT</div>
+          <div><strong>Total TVA:</strong> ${totalTVA.toFixed(3)} DT</div>
+          <div><strong>Total TTC:</strong> ${totalTTC.toFixed(3)} DT</div>
+          <div><strong>Timbre:</strong> 1.000 DT</div>
+          <div><strong>Total TTC + Timbre:</strong> ${totalAvecTimbre.toFixed(
+            3
+          )} DT</div>
+          <div><strong>Total en lettres:</strong> ${totalGlobalEnLettres}</div>
         </div>
   
         <!-- ============================
@@ -481,10 +498,6 @@ export default function GenerateurFacturesHtml() {
         Générateur de Factures
       </h1>
 
-      {/* 
-        -- Le ref invoiceRef pointe sur tout le contenu à transformer en PDF.
-        -- Vous pouvez séparer l’aperçu (display) du composant si besoin.
-      */}
       <div ref={invoiceRef} className='bg-white p-6 shadow-lg rounded-md'>
         {/* =========================
             Infos entreprise 
@@ -655,16 +668,24 @@ export default function GenerateurFacturesHtml() {
             <span className='font-semibold'>Total TTC : </span>
             {formatCurrency(totalTTC)}
           </div>
+          <div>
+            <span className='font-semibold'>Timbre : </span>
+            {formatCurrency(timbre)}
+          </div>
+          <div>
+            <span className='font-semibold'>Total TTC + Timbre : </span>
+            {formatCurrency(totalTTC + timbre)}
+          </div>
           <div className='mt-2 text-sm italic text-gray-700'>
-            {/* Total TTC en lettres */}
             <span className='font-semibold'>En toutes lettres : </span>
-            {totalTTCComplet}
+            {totalGlobalEnLettres}
           </div>
         </div>
       </div>
 
       {/* =========================
-          Contrôles d'édition
+          Contrôles d'édition 
+          (Reste du code inchangé)
       ==========================*/}
       <Card className='mt-6 shadow-md'>
         <CardHeader>
@@ -735,7 +756,10 @@ export default function GenerateurFacturesHtml() {
             </div>
           </div>
 
-          <div className='border p-3 rounded-md'>
+          <div
+            className='border p-3 rounded-md'
+            style={{ display: 'flex', flexDirection: 'column' }}
+          >
             <Label className='font-semibold mb-2 block'>Services</Label>
             <Table>
               <TableHeader>
@@ -806,7 +830,11 @@ export default function GenerateurFacturesHtml() {
                 ))}
               </TableBody>
             </Table>
-            <Button onClick={ajouterService} className='mt-2 w-full'>
+            <Button
+              onClick={ajouterService}
+              className='mt-2'
+              style={{ alignSelf: 'flex-end' }}
+            >
               Ajouter un service
             </Button>
           </div>
