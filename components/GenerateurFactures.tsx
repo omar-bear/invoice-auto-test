@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import html2pdf from 'html2pdf.js';
 import writtenNumber from 'written-number';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +24,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Building2, Phone, FileText, Building } from 'lucide-react';
 import { logo } from '@/components/logo';
+
 const LOGO_BASE64 = logo; // Votre image encodée
 
 // =======================================
@@ -163,7 +163,10 @@ export default function GenerateurFacturesHtml() {
   // ===============================
   // Génération du PDF à partir du HTML
   // ===============================
-  const genererPDF = () => {
+  const genererPDF = async () => {
+    const html2pdff = (await import('html2pdf.js/dist/html2pdf.min.js'))
+      .default;
+
     // Ajout de styles pour un meilleur rendu PDF
     const styles = `
       <style>
@@ -444,7 +447,7 @@ export default function GenerateurFacturesHtml() {
     // Générer le PDF
     const element = document.createElement('div');
     element.innerHTML = content;
-    html2pdf().set(options).from(element).save();
+    html2pdff().set(options).from(element).save();
 
     // Sauvegarde du numéro de facture
     localStorage.setItem('lastInvoiceNumber', numeroFacture);
