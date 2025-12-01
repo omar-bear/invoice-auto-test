@@ -22,10 +22,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Building2, Phone, FileText, Building } from 'lucide-react';
-import { logo } from '@/components/logo';
-
-const LOGO_BASE64 = logo; // Votre image encodée
+import { Trash2, Building2, FileText, Building } from 'lucide-react';
+// Logo servi depuis /public pour l'affichage et la génération du PDF
+const LOGO_SRC = '/dev-ring.png';
 
 // =======================================
 // Configuration de 'written-number' en français
@@ -39,20 +38,27 @@ export default function GenerateurFacturesHtml() {
 
   // Fixed Company Information
   const companyInfo = {
-    name: 'SOCIETE BEN KEBLI SERVICE',
-    fullName: 'Services Electromécaniques & Industriels',
-    address: 'Rue Nabeul Z.I. Mghuira 3',
-    phone: '22 398 057 / 55 398 057',
-    nif: '1889188X/A/M 000',
-    additionalInfo: 'REBOBINAGE',
-    email: 'BenKebliservice@gmail.com',
+    name: 'DEV RING TECHNOLOGIES',
+    fullName: 'Société totalement exportatrice',
+    addressLines: [
+      'Rue Mohamed Badra,',
+      'Immeuble Carthagena Office, Bureau A36,',
+      'Montplaisir 1073, Tunis – Tunisie',
+    ],
+    rne: '1948009H',
+    nif: '1948009 H / M / A',
+    email: 'borjiomar38@gmail.com',
+    iban: 'TN59 1200 5000 0058 0021 7982',
+    swift: 'UIBKTNTT',
   };
 
   // Client Information
-  const [includeClientInfo, setIncludeClientInfo] = useState(false);
-  const [nomClient, setNomClient] = useState('');
-  const [adresseClient, setAdresseClient] = useState('');
-  const [nifClient, setNifClient] = useState('');
+  const [includeClientInfo, setIncludeClientInfo] = useState(true);
+  const [nomClient, setNomClient] = useState('SAS NAEST');
+  const [adresseClient, setAdresseClient] = useState(
+    '78 Avenue des Champs-Élysées, Bureau 562, 75008 Paris, France'
+  );
+  const [nifClient, setNifClient] = useState('SIREN : 981 388 655');
 
   // Invoice Details
   const [numeroFacture, setNumeroFacture] = useState('');
@@ -114,8 +120,12 @@ export default function GenerateurFacturesHtml() {
   // Calcul des montants totaux
   // ===============================
   const formatCurrency = (amount: number) => {
-    return `${amount.toFixed(3)} DT`;
-    // On met 3 décimales pour afficher les millimes si besoin
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
   };
 
   const totalHT = services.reduce((sum, service) => {
@@ -134,30 +144,27 @@ export default function GenerateurFacturesHtml() {
   // Total TTC (sans timbre)
   const totalTTC = totalHT + totalTVA;
 
-  // Timbre : 1 DT
-  const timbre = 1;
-  // Total TTC + Timbre
-  const totalAvecTimbre = totalTTC + timbre;
+  // Pas de timbre en devise EUR
+  const totalAvecTimbre = totalTTC;
 
   // ===============================
   // Conversion du total TTC + Timbre en lettres
   // ===============================
-  // Exemple : 125.750 => "cent vingt-cinq dinars et sept cent cinquante millimes"
-  const totalGlobal = parseFloat(totalAvecTimbre.toFixed(3)); // Arrondi à 3 décimales
-  const partieEntiere = Math.floor(totalGlobal); // Ex: 125
-  const millimes = Math.round((totalGlobal - partieEntiere) * 1000); // Ex: 0.750 * 1000 = 750
+  const totalGlobal = Math.round(totalAvecTimbre * 100) / 100; // Arrondi à 2 décimales
+  const partieEntiere = Math.floor(totalGlobal);
+  const centimes = Math.round((totalGlobal - partieEntiere) * 100);
 
   // Convertir la partie entière en lettres
   const partieEntiereEnLettres = writtenNumber(partieEntiere);
-  // Convertir la partie millimes en lettres (si > 0)
-  const millimesEnLettres = millimes > 0 ? writtenNumber(millimes) : null;
+  // Convertir les centimes en lettres (si > 0)
+  const centimesEnLettres = centimes > 0 ? writtenNumber(centimes) : null;
 
   // Construire la phrase finale
   let totalGlobalEnLettres = '';
-  if (millimesEnLettres) {
-    totalGlobalEnLettres = `${partieEntiereEnLettres} dinars et ${millimesEnLettres} millimes`;
+  if (centimesEnLettres) {
+    totalGlobalEnLettres = `${partieEntiereEnLettres} euros et ${centimesEnLettres} centimes`;
   } else {
-    totalGlobalEnLettres = `${partieEntiereEnLettres} dinars`;
+    totalGlobalEnLettres = `${partieEntiereEnLettres} euros`;
   }
 
   // ===============================
@@ -334,20 +341,20 @@ export default function GenerateurFacturesHtml() {
           <div class="company-info">
             <h2>${companyInfo.name}</h2>
             <p><strong>${companyInfo.fullName}</strong></p>
-            <p>${companyInfo.additionalInfo}</p>
-            <p><strong>Adresse :</strong> ${companyInfo.address}</p>
-            <p><strong>Tél :</strong> ${companyInfo.phone}</p>
-            <p><strong>Email :</strong> ${companyInfo.email}</p>
+            <p><strong>RNE :</strong> ${companyInfo.rne}</p>
             <p><strong>Matricule Fiscal :</strong> ${companyInfo.nif}</p>
+            <p><strong>Adresse :</strong> ${companyInfo.addressLines.join('<br/>')}</p>
+            <p><strong>Email :</strong> ${companyInfo.email}</p>
+            <p><strong>IBAN :</strong> ${companyInfo.iban}</p>
+            <p><strong>Code SWIFT :</strong> ${companyInfo.swift}</p>
             <hr style="margin:10px 0"/>
           </div>
   
           <!-- 2/3 : Titre + Logo -->
           <div class="facture-center">
-            <img src="${LOGO_BASE64}" alt="Logo" />
+            <img src="${LOGO_SRC}" alt="Logo" />
             <h1>Facture</h1>
             <h2>${companyInfo.fullName}</h2>
-            <p>${companyInfo.additionalInfo}</p>
           </div>
   
           <!-- 3/3 : Facture N° + Date -->
@@ -367,7 +374,7 @@ export default function GenerateurFacturesHtml() {
                 <h3>Informations du Client</h3>
                 <p><strong>Client :</strong> ${nomClient}</p>
                 <p><strong>Adresse :</strong> ${adresseClient}</p>
-                ${nifClient ? `<p><strong>NIF :</strong> ${nifClient}</p>` : ''}
+                ${nifClient ? `<p><strong>SIREN :</strong> ${nifClient}</p>` : ''}
               </div>
             `
             : ''
@@ -398,11 +405,11 @@ export default function GenerateurFacturesHtml() {
 
                   return `
                     <tr>
-                      <td>${service.nom}</td>
+                     <td>${service.nom}</td>
                       <td>${quantity}</td>
-                      <td>${unitPrice.toFixed(3)} DT</td>
+                      <td>${formatCurrency(unitPrice)}</td>
                       <td>${tvaRate}%</td>
-                      <td>${totalHT.toFixed(3)} DT</td>
+                      <td>${formatCurrency(totalHT)}</td>
                     </tr>
                   `;
                 })
@@ -415,13 +422,10 @@ export default function GenerateurFacturesHtml() {
              Totaux
         ============================= -->
         <div class="totals">
-          <div><strong>Total HT:</strong> ${totalHT.toFixed(3)} DT</div>
-          <div><strong>Total TVA:</strong> ${totalTVA.toFixed(3)} DT</div>
-          <div><strong>Total TTC:</strong> ${totalTTC.toFixed(3)} DT</div>
-          <div><strong>Timbre:</strong> 1.000 DT</div>
-          <div><strong>Total TTC + Timbre:</strong> ${totalAvecTimbre.toFixed(
-            3
-          )} DT</div>
+          <div><strong>Total HT:</strong> ${formatCurrency(totalHT)}</div>
+          <div><strong>Total TVA:</strong> ${formatCurrency(totalTVA)}</div>
+          <div><strong>Total TTC:</strong> ${formatCurrency(totalTTC)}</div>
+          <div><strong>Total à payer:</strong> ${formatCurrency(totalAvecTimbre)}</div>
           <div><strong>Total en lettres:</strong> ${totalGlobalEnLettres}</div>
         </div>
   
@@ -512,8 +516,8 @@ export default function GenerateurFacturesHtml() {
                 Informations de l&apos;entreprise
               </CardTitle>
               <img
-                src='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-company-NT5ZvVcuDfePS5Jj9vIRnNuxt9oZx4.jpeg'
-                alt='BEN KEBLI S.E.I Logo'
+                src={LOGO_SRC}
+                alt='DEV RING TECHNOLOGIES Logo'
                 className='h-20 w-auto'
               />
             </div>
@@ -532,15 +536,11 @@ export default function GenerateurFacturesHtml() {
                 <Building className='h-5 w-5' />
                 <div>
                   <h3 className='font-semibold'>Adresse</h3>
-                  <p className='text-sm'>{companyInfo.address}</p>
-                </div>
-              </div>
-
-              <div className='flex items-center gap-3'>
-                <Phone className='h-5 w-5' />
-                <div>
-                  <h3 className='font-semibold'>Téléphone</h3>
-                  <p className='text-sm'>{companyInfo.phone}</p>
+                  {companyInfo.addressLines.map((line, idx) => (
+                    <p key={idx} className='text-sm'>
+                      {line}
+                    </p>
+                  ))}
                 </div>
               </div>
 
@@ -549,6 +549,38 @@ export default function GenerateurFacturesHtml() {
                 <div>
                   <h3 className='font-semibold'>Matricule Fiscal</h3>
                   <p className='text-sm'>{companyInfo.nif}</p>
+                </div>
+              </div>
+
+              <div className='flex items-center gap-3'>
+                <FileText className='h-5 w-5' />
+                <div>
+                  <h3 className='font-semibold'>RNE</h3>
+                  <p className='text-sm'>{companyInfo.rne}</p>
+                </div>
+              </div>
+
+              <div className='flex items-center gap-3'>
+                <FileText className='h-5 w-5' />
+                <div>
+                  <h3 className='font-semibold'>Email</h3>
+                  <p className='text-sm'>{companyInfo.email}</p>
+                </div>
+              </div>
+
+              <div className='flex items-center gap-3'>
+                <FileText className='h-5 w-5' />
+                <div>
+                  <h3 className='font-semibold'>IBAN</h3>
+                  <p className='text-sm'>{companyInfo.iban}</p>
+                </div>
+              </div>
+
+              <div className='flex items-center gap-3'>
+                <FileText className='h-5 w-5' />
+                <div>
+                  <h3 className='font-semibold'>Code SWIFT</h3>
+                  <p className='text-sm'>{companyInfo.swift}</p>
                 </div>
               </div>
 
@@ -592,7 +624,7 @@ export default function GenerateurFacturesHtml() {
                 <p>{adresseClient}</p>
                 {nifClient && (
                   <>
-                    <h3 className='font-semibold mt-2'>NIF</h3>
+                    <h3 className='font-semibold mt-2'>SIREN</h3>
                     <p>{nifClient}</p>
                   </>
                 )}
@@ -658,7 +690,7 @@ export default function GenerateurFacturesHtml() {
         {/* =========================
             Totaux
         ==========================*/}
-        <div className='mt-4 flex flex-col items-end space-y-1 text-sm'>
+          <div className='mt-4 flex flex-col items-end space-y-1 text-sm'>
           <div>
             <span className='font-semibold'>Total HT : </span>
             {formatCurrency(totalHT)}
@@ -672,12 +704,8 @@ export default function GenerateurFacturesHtml() {
             {formatCurrency(totalTTC)}
           </div>
           <div>
-            <span className='font-semibold'>Timbre : </span>
-            {formatCurrency(timbre)}
-          </div>
-          <div>
-            <span className='font-semibold'>Total TTC + Timbre : </span>
-            {formatCurrency(totalTTC + timbre)}
+            <span className='font-semibold'>Total à payer : </span>
+            {formatCurrency(totalAvecTimbre)}
           </div>
           <div className='mt-2 text-sm italic text-gray-700'>
             <span className='font-semibold'>En toutes lettres : </span>
@@ -721,7 +749,7 @@ export default function GenerateurFacturesHtml() {
                 />
               </div>
               <div className='grid gap-2'>
-                <Label htmlFor='nifClient'>NIF</Label>
+                <Label htmlFor='nifClient'>SIREN</Label>
                 <Input
                   id='nifClient'
                   value={nifClient}
