@@ -85,7 +85,7 @@ export default function GenerateurFacturesHtml() {
   }, [isLoggedIn]);
 
   const handleLogin = () => {
-    if (username.toLowerCase() === 'dali' && password === '123456') {
+    if (username.toLowerCase() === 'omar' && password === '123456') {
       setIsLoggedIn(true);
       localStorage.setItem('is-logged-in', 'true');
     } else {
