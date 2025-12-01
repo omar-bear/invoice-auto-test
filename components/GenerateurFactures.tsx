@@ -46,7 +46,6 @@ export default function GenerateurFacturesHtml() {
       'Montplaisir 1073, Tunis – Tunisie',
     ],
     rne: '1948009H',
-    nif: '1948009 H / M / A',
     email: 'borjiomar38@gmail.com',
     iban: 'TN59 1200 5000 0058 0021 7982',
     swift: 'UIBKTNTT',
@@ -341,8 +340,7 @@ export default function GenerateurFacturesHtml() {
           <div class="company-info">
             <h2>${companyInfo.name}</h2>
             <p><strong>${companyInfo.fullName}</strong></p>
-            <p><strong>RNE :</strong> ${companyInfo.rne}</p>
-            <p><strong>Matricule Fiscal :</strong> ${companyInfo.nif}</p>
+            <p><strong>Identifiant Unique :</strong> ${companyInfo.rne}</p>
             <p><strong>Adresse :</strong> ${companyInfo.addressLines.join('<br/>')}</p>
             <p><strong>Email :</strong> ${companyInfo.email}</p>
             <p><strong>IBAN :</strong> ${companyInfo.iban}</p>
@@ -547,15 +545,7 @@ export default function GenerateurFacturesHtml() {
               <div className='flex items-center gap-3'>
                 <FileText className='h-5 w-5' />
                 <div>
-                  <h3 className='font-semibold'>Matricule Fiscal</h3>
-                  <p className='text-sm'>{companyInfo.nif}</p>
-                </div>
-              </div>
-
-              <div className='flex items-center gap-3'>
-                <FileText className='h-5 w-5' />
-                <div>
-                  <h3 className='font-semibold'>RNE</h3>
+                  <h3 className='font-semibold'>Identifiant Unique</h3>
                   <p className='text-sm'>{companyInfo.rne}</p>
                 </div>
               </div>
