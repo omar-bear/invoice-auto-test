@@ -71,10 +71,11 @@ export default function GenerateurFacturesHtml() {
 
   // Au premier chargement, on récupère le dernier numéro de facture stocké
   useEffect(() => {
-    const lastInvoiceNumber = localStorage.getItem('lastInvoiceNumber') || '0';
-    setNumeroFacture(
-      (parseInt(lastInvoiceNumber) + 1).toString().padStart(4, '0')
-    );
+    const currentYear = new Date().getFullYear();
+    const storageKey = `lastInvoiceNumber_${currentYear}`;
+    const lastInvoiceNumber = localStorage.getItem(storageKey) || '0';
+    const nextNumber = (parseInt(lastInvoiceNumber) + 1).toString().padStart(3, '0');
+    setNumeroFacture(`${currentYear}-${nextNumber}`);
     setDateFacture(new Date().toISOString().split('T')[0]);
 
     // Synchronisation connexion admin
@@ -452,7 +453,14 @@ export default function GenerateurFacturesHtml() {
     html2pdff().set(options).from(element).save();
 
     // Sauvegarde du numéro de facture
-    localStorage.setItem('lastInvoiceNumber', numeroFacture);
+    // Extraire la partie numérique du numéro de facture (ex: "2026-001" -> "001")
+    const invoiceNumberParts = numeroFacture.split('-');
+    if (invoiceNumberParts.length >= 2) {
+      const year = invoiceNumberParts[0];
+      const number = invoiceNumberParts[invoiceNumberParts.length - 1];
+      const storageKey = `lastInvoiceNumber_${year}`;
+      localStorage.setItem(storageKey, number);
+    }
   };
 
   // ===============================
